@@ -1,4 +1,5 @@
 const User = require("../../models/User");
+const userSession = require("../../models/Usersession");
 
 module.exports = app => {
   //   app.get("/api/counters", (req, res, next) => {
@@ -100,39 +101,38 @@ module.exports = app => {
       });
     }
 
-    User.find({ email: email })
-      .exec()
-      .then(users => {
-        if (err) {
-          return res.send({
-            success: false,
-            messege: "Error! occured"
-          });
-        }
-        if (user.lenght != 1) {
-          return res.send({
-            success: false,
-            messege: "Email not found!"
-          });
-        }
-
-        const user = users[0];
-        if (user.validPassword(password)) {
-          new userSession =  new userSession();
-          
-
-        } else {
-          return res.send({
-            success: false,
-            messege: "Invalid Password"
-          });
-        }
-      })
-      .catch(err => {
+    User.find({ email: email }, (err, users) => {
+      if (err) {
         return res.send({
           success: false,
-          messege: "There was a error"
+          messege: "Error! occured"
         });
-      });
+      }
+      if (users.length != 1) {
+        return res.send({
+          success: false,
+          messege: "Email not found!"
+        });
+      }
+
+      const user = users[0];
+      console.log(user);
+      if (user.validPassword(password)) {
+        const usersession = new userSession();
+        usersession.userId = user._id;
+        usersession.save((err, doc) => {
+          return res.send({
+            success: true,
+            messege: "Successful Sign in ",
+            token: doc._id
+          });
+        });
+      } else {
+        return res.send({
+          success: false,
+          messege: "Invalid Password"
+        });
+      }
+    });
   });
 };
