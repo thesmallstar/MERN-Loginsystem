@@ -55,16 +55,18 @@ module.exports = app => {
 
     //2. Save
 
+    //THIS IS MAKING ERROR OF DUPLCATE REQUEST
     User.find(
       {
         email: email
       },
       (err, prevousUsers) => {
         if (err) {
-          res.send({ success: false, messege: "Error: Server Error " });
+          return res.send({ success: false, messege: "Error: Server Error " });
         }
         if (prevousUsers.length > 0) {
-          return res.send({ success: false, messege: "Error: Account Exist" });
+          res.send({ success: false, messege: "Error: Account Exist" });
+          return;
         }
       }
     );
@@ -79,12 +81,12 @@ module.exports = app => {
       if (err) {
         return res.send({ success: false, messege: "Error: Server Error " });
       } else {
-        res.send({ success: true, messege: "Account Created " });
+        return res.send({ success: true, messege: "Account Created " });
       }
     });
   });
 
-  app.post("/api/account/signin", (req, res) => {
+  app.post("/api/account/signin", (req, res, next) => {
     const { body } = req;
     const { password } = body;
     let { email } = body;
@@ -118,7 +120,7 @@ module.exports = app => {
       }
 
       const user = users[0];
-      console.log(user);
+
       if (user.validPassword(password)) {
         const usersession = new userSession();
         usersession.userId = user._id;
@@ -136,5 +138,66 @@ module.exports = app => {
         });
       }
     });
+  });
+
+  app.get("/api/account/logout", (req, res) => {
+    const { query } = req;
+    const { token } = query;
+
+    userSession.findOneAndUpdate(
+      {
+        _id: token,
+        isDeleted: false
+      },
+      {
+        $set: {
+          isDeleted: true
+        }
+      },
+      null,
+      (err, sessions) => {
+        if (err) {
+          return res.send({
+            success: false,
+            messege: "Server Error"
+          });
+        } else {
+          return res.send({
+            success: true,
+            messege: "SuccessFully Logged Out!"
+          });
+        }
+      }
+    );
+  });
+
+  app.get("/api/account/verify", (req, res) => {
+    const { query } = req;
+    const { token } = query;
+
+    userSession.find(
+      {
+        _id: token,
+        isDeleted: false
+      },
+      (err, sessions) => {
+        if (err) {
+          return res.send({
+            success: false,
+            messege: "Server Error"
+          });
+        } else if (sessions.length == 1) {
+          return res.send({
+            success: true,
+            messege: "Valid!"
+          });
+        } else {
+          return res.send({
+            success: false,
+            messege: "Invalid!"
+          });
+        }
+      }
+    );
   });
 };
