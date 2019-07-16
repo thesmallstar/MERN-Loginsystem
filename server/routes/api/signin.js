@@ -61,8 +61,9 @@ module.exports = app => {
       },
       (err, prevousUsers) => {
         if (err) {
-          return res.send({ success: false, messege: "Error: Server Error " });
-        } else if (prevousUsers.legth > 0) {
+          res.send({ success: false, messege: "Error: Server Error " });
+        }
+        if (prevousUsers.length > 0) {
           return res.send({ success: false, messege: "Error: Account Exist" });
         }
       }
@@ -77,8 +78,9 @@ module.exports = app => {
     newUser.save((err, user) => {
       if (err) {
         return res.send({ success: false, messege: "Error: Server Error " });
+      } else {
+        res.send({ success: true, messege: "Account Created " });
       }
-      return res.send({ success: true, messege: "Account Created " });
     });
   });
 
